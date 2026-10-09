@@ -1,0 +1,34 @@
+{
+  "_comment": "零配置演示数据。字段与麦当劳 MCP 工具返回值的归一化结构一致，日期固定以便复现同一份报告。",
+  "now": "2026-10-09",
+
+  "account": {
+    "available_points": 3260,
+    "accumulated_points": 18400,
+    "frozen_points": 0,
+    "expiring": [
+      { "points": 800, "expire_date": "2026-10-31" },
+      { "points": 150, "expire_date": "2026-11-05" },
+      { "points": 500, "expire_date": "2026-12-20" }
+    ]
+  },
+
+  "mall_products": [
+    { "name": "麦乐鸡 5 块兑换券", "points": 250, "cash_value": 13.5, "valid_days": 30, "kind": "餐品券" },
+    { "name": "巨无霸汉堡兑换券", "points": 500, "cash_value": 26.5, "valid_days": 30, "kind": "餐品券" },
+    { "name": "麦辣鸡腿堡兑换券", "points": 450, "cash_value": 22.5, "valid_days": 30, "kind": "餐品券" },
+    { "name": "中杯可乐兑换券", "points": 180, "cash_value": 9.0, "valid_days": 30, "kind": "饮品券" },
+    { "name": "脆薯饼兑换券", "points": 150, "cash_value": 7.0, "valid_days": 30, "kind": "早餐券" },
+    { "name": "香芋派兑换券", "points": 200, "cash_value": 8.5, "valid_days": 30, "kind": "甜品券" },
+    { "name": "中薯条兑换券", "points": 300, "cash_value": 12.5, "valid_days": 30, "kind": "餐品券" },
+    { "name": "麦当劳经典马克杯（周边）", "points": 3800, "cash_value": 59.0, "valid_days": null, "kind": "周边" }
+  ],
+
+  "coupons": [
+    { "name": "满 30 元减 8 元券", "cash_value": 8.0, "min_spend": 30, "expire_date": "2026-10-15" },
+    { "name": "麦乐鸡 5 块优惠券", "cash_value": 12.5, "min_spend": 0, "expire_date": "2026-10-20" },
+    { "name": "早餐满 15 元减 5 元券", "cash_value": 5.0, "min_spend": 15, "expire_date": "2026-11-30" }
+  ],
+
+  "recent_redemptions": []
+}

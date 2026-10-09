@@ -1,0 +1,18 @@
+# 凭证与敏感信息 —— 绝不提交
+.env
+.env.*
+*.token
+token.txt
+mcp.json
+my-account.json
+
+# 本地配置
+.vscode/
+.idea/
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
