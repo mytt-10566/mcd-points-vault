@@ -10,37 +10,58 @@
 返回当前完整时间。用途：计算积分/券的剩余天数。**不要**用模型自身的时间推测，一律以此工具返回为准。
 
 ### `query-my-account`
-查询积分账户信息，返回可用积分、累计积分、冻结积分、即将过期积分。
+查询积分账户信息。**实测返回的是月份粒度的桶，不是逐笔积分批次**：
 
-映射到标准字段：
+| 返回值 | 含义 | 标准字段 |
+| --- | --- | --- |
+| `availablePoint` | 可用积分（**字符串小数**，如 `"2741.9"`） | `account.available_points` |
+| `accumulativePoint` | 累计积分 | `account.accumulated_points` |
+| `frozenPoint` | 冻结积分 | `account.frozen_points` |
+| `expiredPoint` | **历史累计已过期积分** | `account.expired_points` |
+| `currentMouthExpirePoint` | 本月将过期积分 | `account.expiring[]` |
+| `nextMouthExpirePoint` | 下月将过期积分 | 参考信息 |
+| `lastMouthExpirePoint` | 上月已过期积分 | 参考信息 |
+| `usedPoint` | 已使用积分 | 参考信息 |
 
-| 返回值含义 | 标准字段 |
-| --- | --- |
-| 可用积分 | `account.available_points` |
-| 累计积分 | `account.accumulated_points` |
-| 冻结积分 | `account.frozen_points` |
-| 即将过期积分（含到期日） | `account.expiring[]`，每项含 `points` 与 `expire_date` |
+⚠️ **没有任何字段给出具体到期日**，只有「本月/下月」这种月份粒度。所以「还剩几天到期」只能用当月最后一天作为**上界**，并在报告中如实标注这是推算值。
 
-这是本技能最关键的一次调用。若「即将过期积分」为空或缺字段，如实说明数据缺失。
+这是本技能最关键的一次调用。若 `currentMouthExpirePoint` 缺失或为 0，如实说明数据缺失，不要凭空推断。
 
 ### `mall-points-products`
-查询麦麦商城内可用积分兑换或现金购买的商品（不含第三方兑换码）。
+查询麦麦商城的商品列表。**实测返回 50 项，其中只有 24 项是积分商品，另 26 项是纯现金业务**（生日派对、主题派对、品鉴会、读书会，`point = 0`），必须筛选。
 
-映射到标准字段：
+| 返回值 | 含义 | 标准字段 |
+| --- | --- | --- |
+| `spuName` | 商品名称（**金额常写在名字里**，如 `"21.9元巨无霸可乐组合"`） | `mall_products[].name` |
+| `point` | 所需积分（积分为 `"0"` 时是现金商品，直接跳过） | `mall_products[].points` |
+| `catName` | 商品类型 | `mall_products[].kind` |
+| `price` | **积分商品恒为 `"0"`，不可用作参考价** | 不可用 |
+| `status` | **实测恒为 `2`，无法区分为在售/已下架** | 不可用 |
 
-| 返回值含义 | 标准字段 |
-| --- | --- |
-| 商品名称 | `mall_products[].name` |
-| 所需积分 | `mall_products[].points` |
-| 商品类型 | `mall_products[].kind` |
-
-**关键缺口**：该接口不直接返回商品的市场参考价，而这是计算「每 100 积分兑现价值」的必要输入。补全方式见下节。
+⚠️ **该接口会把已下架商品一并返回。** 实测 24 个积分兑换项里 17 个已下架（71%）。**必须逐个调 `mall-product-detail` 验证**，以下架错误码 `610403` 为准。
 
 ### `mall-product-detail`
-查询商城商品详情（图片、积分、有效期、说明）。用途：为积分效率靠前的候选商品补充 `valid_days`，判断兑换后是否来得及使用。
+按 `spuId` 查商品详情。两个关键字段：
+
+- `data.skuList[].extTradePrice` —— **用券价**（你还要付多少钱），**不是券的价值**
+- `data.note` —— 券面说明，其中【兑换内容】写明了套餐/任选的**具体构成**，是定价的唯一依据
+
+**关键缺口**：接口不直接返回商品的市场参考价，而这是计算「每 100 积分兑现价值」的必要输入。补全方式见下节。
+
+### `query-nearby-stores` → `query-meals`
+`query-meals` 必传 `storeCode` / `orderType` / `beType`，其中 `storeCode` 需先用 `query-nearby-stores` 取得（`searchType=2` 按城市+关键词搜索，`searchType=1` 搜收藏门店）。
+
+`query-meals` 返回的 `data.meals` 是**以餐品编码为键的 dict**（不是数组），每项含 `name` / `currentPrice` / `originalPrice`。
+
+- `originalPrice`（常规价）= 计算净节省的基准，与麦当劳券面说明第 10 条「节省金额是与常规价格相比较」一致
+- `currentPrice`（现价）= 给「免费券」估值时用现价，更保守
 
 ### `query-my-coupons`
-查询用户账户下的优惠券列表。映射为 `coupons[]`，含 `name`、`cash_value`、`min_spend`、`expire_date`。
+查询用户账户下的优惠券列表。
+
+⚠️ **实测没有结构化返回** —— 只有一段 markdown 文本（含 `<img>` 标签与 `- **优惠**: ¥0 (用券价格)` 这样的行），必须正则解析。映射为 `coupons[]`，含 `name`、`cash_value`、`expire_date`。
+
+`优惠: ¥0 (用券价格)` 表示「凭此券 0 元拿走该单品」，其价值 = 该单品的**现价**（保守口径，用 `query-meals` 的 `currentPrice`）。
 
 ## 辅助工具（按需调用）
 
@@ -49,7 +70,7 @@
 `auto-bind-coupons` 自动领取全部可领券 —— **属于账户写操作，必须经用户确认后执行**。
 
 ### `calculate-price`
-根据商品列表与优惠券试算金额、配送费、优惠金额与应付总价。用途：验证「积分兑换 + 券」的实际组合收益，把券的 `cash_value` 从面值校正为真实可抵扣额。
+根据商品列表与优惠券试算金额、配送费、优惠金额与应付总价。用途：验证「积分兑换 + 券」组合的真实抵扣效果。
 
 ### `campaign-calendar`
 查询当月营销活动日历（进行中、往期、未来）。用途：判断是否值得择时兑换（例如临近大促时先持有积分）。
@@ -69,15 +90,24 @@
 - `draw-lottery` / `query-lottery-info` —— 积分抽奖。不提供概率分析或中奖率优化建议，规避「宣扬赌博」的合规风险。
 - `create-order` / `cancel-order` / `party-order-create` —— 点餐与主题活动下单，不属于资产运营范畴。
 
-## 补全 `cash_value` 的三种方式
+## `cash_value` 怎么来：净节省，不是面值
 
-按可靠性从高到低选择：
+`cash_value` 在本引擎里定义为**净节省额**，而不是券面金额：
 
-1. **`mall-product-detail`**：若返回中包含商品价值或可兑换权益的说明，直接采用。
-2. **`query-meals` 交叉比对**：对餐品类兑换券，用同款餐品在当前门店的实际售价作为参考价。
-3. **人工给定**：请用户提供大致市价，并在报告中标注为估算。
+```
+cash_value = 常规价 − 用券价
+```
 
-若三者均不可用，把该商品的 `cash_value` 置为 `0` 并在报告说明中提示数据不足 —— **不要编造价格**。
+推导链条（以 `spuId 17081` 为例）：
+
+1. 商品名 `"21.9元巨无霸可乐组合"` → 用券价 ¥21.9
+2. `mall-product-detail` 的【兑换内容】→「含 1 份巨无霸 + 1 份中可乐」
+3. `query-meals` 的 `originalPrice` → 巨无霸 ¥25.50 + 中可乐 ¥9.50 = 常规价 ¥35.00
+4. 净节省 = 35.00 − 21.9 = **¥13.10**；800 积分 → `13.10 / 800 × 100 = 1.64 元/100分`
+
+⚠️ 若误把用券价当价值，会得出 `21.9 / 800 × 100 = 2.74 元/100分`，**既高估规模又颠倒排序**。详见 `valuation-model.md`。
+
+**无法定价时怎么办**：宁可在报告中列出「该项无法定价」及具体原因（如「构成单品不在菜单中」「已下架」），也不要估算。归一化工具 `tools/normalize_mcp.py --explain` 会把每一项的定价过程与失败原因都打印出来，便于人工复核。
 
 ## 限流与错误处理
 

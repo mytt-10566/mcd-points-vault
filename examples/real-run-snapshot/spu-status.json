@@ -1,0 +1,225 @@
+[
+  {
+    "spuId": 14931,
+    "spuName": "为随心配五大巨星“应援”1积分兑换活动",
+    "point": "1",
+    "cat": "到店专用",
+    "live": false,
+    "code": 610403,
+    "message": "商品已下架"
+  },
+  {
+    "spuId": 6113,
+    "spuName": "18.8元2份麦辣鸡翅",
+    "point": "200",
+    "cat": "到店专用",
+    "live": false,
+    "code": 610403,
+    "message": "商品已下架"
+  },
+  {
+    "spuId": 17077,
+    "spuName": "10.9元指定小食任选",
+    "point": "200",
+    "cat": "到店专用",
+    "live": true,
+    "extTradePrice": "10.9",
+    "skuPoints": "200",
+    "skuId": 17783
+  },
+  {
+    "spuId": 17079,
+    "spuName": "16.9元麦辣可乐组合",
+    "point": "500",
+    "cat": "到店专用",
+    "live": true,
+    "extTradePrice": "16.9",
+    "skuPoints": "500",
+    "skuId": 17785
+  },
+  {
+    "spuId": 17081,
+    "spuName": "21.9元巨无霸可乐组合",
+    "point": "800",
+    "cat": "到店专用",
+    "live": true,
+    "extTradePrice": "21.9",
+    "skuPoints": "800",
+    "skuId": 17787
+  },
+  {
+    "spuId": 6111,
+    "spuName": "18.8元板烧鸡腿堡两件套",
+    "point": "100",
+    "cat": "到店专用",
+    "live": false,
+    "code": 610403,
+    "message": "商品已下架"
+  },
+  {
+    "spuId": 6115,
+    "spuName": "22.8元2份麦辣鸡腿堡",
+    "point": "500",
+    "cat": "到店专用",
+    "live": false,
+    "code": 610403,
+    "message": "商品已下架"
+  },
+  {
+    "spuId": 15866,
+    "spuName": "5.9元香芋派/菠萝派任选",
+    "point": "50",
+    "cat": "到店专用",
+    "live": false,
+    "code": 610403,
+    "message": "商品已下架"
+  },
+  {
+    "spuId": 16052,
+    "spuName": "28.9元板烧四件套",
+    "point": "800",
+    "cat": "到店专用",
+    "live": false,
+    "code": 610403,
+    "message": "商品已下架"
+  },
+  {
+    "spuId": 16054,
+    "spuName": "22.9元2份板烧鸡腿堡",
+    "point": "500",
+    "cat": "到店专用",
+    "live": false,
+    "code": 610403,
+    "message": "商品已下架"
+  },
+  {
+    "spuId": 16055,
+    "spuName": "22.9元2份麦辣鸡腿堡",
+    "point": "500",
+    "cat": "到店专用",
+    "live": false,
+    "code": 610403,
+    "message": "商品已下架"
+  },
+  {
+    "spuId": 16056,
+    "spuName": "16.9元中薯麦乐鸡组合",
+    "point": "200",
+    "cat": "到店专用",
+    "live": false,
+    "code": 610403,
+    "message": "商品已下架"
+  },
+  {
+    "spuId": 17694,
+    "spuName": "罗技键鼠套装",
+    "point": "6666",
+    "cat": "玩具",
+    "live": false,
+    "code": 610403,
+    "message": "商品已下架"
+  },
+  {
+    "spuId": 17073,
+    "spuName": "6.9元可乐麦炫酷",
+    "point": "50",
+    "cat": "到店专用",
+    "live": true,
+    "extTradePrice": "6.9",
+    "skuPoints": "50",
+    "skuId": 17779
+  },
+  {
+    "spuId": 17074,
+    "spuName": "6.9元香芋派/菠萝派任选",
+    "point": "50",
+    "cat": "到店专用",
+    "live": true,
+    "extTradePrice": "6.9",
+    "skuPoints": "50",
+    "skuId": 17780
+  },
+  {
+    "spuId": 17076,
+    "spuName": "10.9元指定小食任选",
+    "point": "100",
+    "cat": "到店专用",
+    "live": true,
+    "extTradePrice": "10.9",
+    "skuPoints": "100",
+    "skuId": 17782
+  },
+  {
+    "spuId": 17080,
+    "spuName": "17.9元板烧可乐组合",
+    "point": "500",
+    "cat": "到店专用",
+    "live": true,
+    "extTradePrice": "17.9",
+    "skuPoints": "500",
+    "skuId": 17786
+  },
+  {
+    "spuId": 5246,
+    "spuName": "28.8元巨无霸四件套",
+    "point": "800",
+    "cat": "到店专用",
+    "live": false,
+    "code": 610403,
+    "message": "商品已下架"
+  },
+  {
+    "spuId": 6110,
+    "spuName": "18.8元麦辣鸡腿汉堡两件套",
+    "point": "50",
+    "cat": "到店专用",
+    "live": false,
+    "code": 610403,
+    "message": "商品已下架"
+  },
+  {
+    "spuId": 6112,
+    "spuName": "18.8元指定小食任选2份",
+    "point": "100",
+    "cat": "到店专用",
+    "live": false,
+    "code": 610403,
+    "message": "商品已下架"
+  },
+  {
+    "spuId": 6114,
+    "spuName": "麦麦脆汁鸡两件套",
+    "point": "200",
+    "cat": "到店专用",
+    "live": false,
+    "code": 610403,
+    "message": "商品已下架"
+  },
+  {
+    "spuId": 6116,
+    "spuName": "24.8元2份板烧鸡腿堡",
+    "point": "500",
+    "cat": "到店专用",
+    "live": false,
+    "code": 610403,
+    "message": "商品已下架"
+  },
+  {
+    "spuId": 16800,
+    "spuName": "Nike Book 2 麦当劳特别联名款",
+    "point": "8888",
+    "cat": "鞋袜",
+    "live": false,
+    "code": 610403,
+    "message": "商品已下架"
+  },
+  {
+    "spuId": 15867,
+    "spuName": "9.9元指定小食任选",
+    "point": "100",
+    "cat": "到店专用",
+    "live": false,
+    "code": 610403,
+    "message": "商品已下架"
+  }
+]

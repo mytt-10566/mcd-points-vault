@@ -94,25 +94,41 @@ python3 scripts/points_vault.py --demo
 
 Skill 会自动调用 MCP 拉取你的真实账户数据，然后输出体检报告。
 
+## 它不止是演示
+
+这个项目已经跑过真实账户。想直接看真实调用的原始记录与实测发现（包括商城里 **71% 的积分兑换项其实已经下架** 这件事），见 [`examples/real-run.md`](examples/real-run.md)。
+
 ## 工作原理
 
 ```
-now-time-info ────────┐
-query-my-account ─────┤   MCP 实时拉取
-mall-points-products ─┼──► 归一化 ──► 本地估值引擎 ──► 资产体检报告
-query-my-coupons ─────┤              (纯标准库，可离线复现)
-campaign-calendar ────┘
+query-nearby-stores ─┐
+query-meals ─────────┤  常规价基准
+now-time-info ───────┤
+query-my-account ────┤  MCP 实时拉取
+mall-points-products ┤
+mall-product-detail ─┤  逐个验证在售状态 + 取用券价
+query-my-coupons ────┘
+                     │
+                     ▼
+        tools/normalize_mcp.py   归一化（MCP 返回无法直接用于计算）
+                     │
+                     ▼
+        scripts/points_vault.py  本地估值引擎（纯标准库，可离线复现）
+                     │
+                     ▼
+              资产体检报告
 ```
 
-三个核心计算：
+四个核心计算：
 
 | 指标 | 公式 |
 | --- | --- |
-| 每 100 积分兑现价值 | `商品参考价值 ÷ 所需积分 × 100` |
+| 单项净节省 | `常规价 − 用券价` |
+| 每 100 积分兑现价值 | `净节省 ÷ 所需积分 × 100` |
 | 积分账面价值 | `可用积分 × 最优汇率` |
 | 风险敞口 | `30 天内到期的积分 × 最优汇率` |
 
-详细模型见 [`references/valuation-model.md`](references/valuation-model.md)。
+> 商城里的积分兑换项大多是**折扣购买权**，不是面值券 —— 花 800 积分换到的是「以 ¥21.9 买下巨无霸可乐组合」的权利。所以价值必须按净节省算，否则排序会完全颠倒。详细推导见 [`references/valuation-model.md`](references/valuation-model.md)。
 
 ## 目标用户
 
@@ -130,13 +146,15 @@ mcd-points-vault/
 ├── scripts/
 │   └── points_vault.py           # 估值引擎（纯标准库，零依赖）
 ├── tools/
-│   └── make_demo_gif.py          # 演示动图生成器（构建工具，需 Pillow）
+│   ├── make_demo_gif.py          # 演示动图生成器（构建工具，需 Pillow）
+│   └── normalize_mcp.py          # MCP 原始返回 → 引擎输入（纯标准库）
 ├── references/
 │   ├── tool-playbook.md          # MCP 工具调用手册
 │   └── valuation-model.md        # 估值模型与标准输入格式
 ├── examples/
-│   ├── demo-account.json         # 演示数据
-│   └── demo-report.md            # 演示报告存档
+│   ├── demo-account.json         # 演示数据（构造）
+│   ├── demo-report.md            # 演示报告存档
+│   └── real-run.md               # 真实账户调用记录与实测发现
 ├── README.md                     # 本文件
 ├── MCP_INTEGRATION.md            # MCP 集成说明
 ├── CONTEST_DECLARATION.md        # 参赛声明（官方原文）

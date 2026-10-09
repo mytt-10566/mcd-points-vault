@@ -35,24 +35,38 @@ agent_created: true
 | 顺序 | 工具 | 取什么 |
 | --- | --- | --- |
 | 1 | `now-time-info` | 当前日期，用于计算剩余天数 |
-| 1 | `query-my-account` | 可用积分、累计积分、冻结积分、**即将过期积分** |
-| 1 | `mall-points-products` | 麦麦商城当前可用积分兑换的商品列表 |
+| 1 | `query-my-account` | 可用积分、累计积分、冻结积分、**本月将过期积分**、历史已过期积分 |
+| 1 | `mall-points-products` | 麦麦商城的商品列表（**含积分商品与纯现金商品，需自行筛选**） |
 | 1 | `query-my-coupons` | 用户账户下的优惠券及到期时间 |
-| 2 | `mall-product-detail` | 对第 1 组里积分效率靠前的商品补充详情（有效期、说明） |
-| 2 | `available-coupons` | 麦麦省当前可领取的券，用于「还能多领多少」的增量建议 |
+| 2 | `mall-product-detail` | **逐个**验证积分商品是否仍在售，并取用券价与兑换内容 |
+| 2 | `query-nearby-stores` → `query-meals` | 取得 `storeCode` 后拉菜单，作为常规价基准 |
+| 3 | `available-coupons` | 麦麦省当前可领取的券，用于「还能多领多少」的增量建议 |
 | 3 | `campaign-calendar` | 当月活动日历，用于判断是否值得择时兑换 |
 
-注意：`query-my-account` 返回的「即将过期积分」是本技能的核心输入，若该字段缺失，明确告知用户数据不足，不要凭空推断。
+三个必须记住的实测事实（详见 `MCP_INTEGRATION.md`）：
+
+1. `query-my-account` **不返回逐笔到期日**，只有 `currentMouthExpirePoint`（本月）等月份桶。若该字段缺失，明确告知用户数据不足，不要凭空推断。
+2. `mall-points-products` **会把已下架商品一并返回**，`status` 字段无法区分（实测恒为 2）。实测 24 个积分兑换项里 17 个已下架 —— **不逐个调 `mall-product-detail` 验证，报告就是错的**。
+3. 积分商品的 `price` 恒为 `"0"`，金额在 `skuList[].extTradePrice`，而那是**用券价**，不是价值。
 
 ### 第 2 步：归一化为标准输入
 
-把上一步的返回值整理成 `references/valuation-model.md` 定义的标准 JSON 结构。字段允许宽松匹配（引擎已容忍 `points`/`amount`/`balance` 等同义命名），但以下三项必须准确：
+MCP 原始返回不能直接喂给引擎，用归一化工具转换：
 
-- `account.available_points` —— 可用积分
-- `account.expiring[].points` 与 `.expire_date` —— 即将过期积分及到期日
-- `mall_products[].points` 与 `.cash_value` —— 兑换所需积分与该商品的市场参考价
+```bash
+python3 tools/normalize_mcp.py --snapshot <MCP 原始返回目录> --explain -o input.json
+```
 
-`cash_value` 缺失时，参考同类餐品在 `query-meals` 中的标价估算，并在报告中标注为估算值。
+该工具负责：筛掉纯现金商品、逐项验证在售状态、解析兑换内容、按 `常规价 − 用券价` 算出净节省。
+`--explain` 会打印每一项的定价过程与**无法定价的原因**，便于人工复核。
+
+以下三项必须准确：
+
+- `account.available_points` —— 可用积分（**是小数，如 2741.9，不要取整**）
+- `account.expiring[]` —— 即将过期的积分桶（到期日只有月份粒度时，用月末作为上界并标注）
+- `mall_products[].cash_value` —— **净节省额**（`常规价 − 用券价`），不是券面金额
+
+定价缺失时宁可在报告中标注「无法定价」并列出原因，也不要估算 —— 一个看起来合理但错误的数字，比没有数字更有害。
 
 ### 第 3 步：运行估值引擎
 

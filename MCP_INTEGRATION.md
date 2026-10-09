@@ -13,7 +13,7 @@
 
 ## 实际调用的 Tool
 
-本技能围绕「积分与券的资产运营」组织调用，共使用 9 个工具，分为三类。
+本技能围绕「积分与券的资产运营」组织调用，共使用 12 个工具，分为三类。MCP Server 实测暴露 35 个工具（本文档为其子集）。
 
 ### 核心（构成估值闭环，每次体检必调）
 
@@ -29,7 +29,8 @@
 
 | Tool | 中文名 | 在本项目中的作用 |
 | --- | --- | --- |
-| `query-meals` | 查询当前可售卖的餐品列表 | 为餐品类兑换券交叉比对真实售价，补全 `cash_value` |
+| `query-nearby-stores` | 查询附近可用门店 | 取得 `storeCode`，是调用 `query-meals` 的前置条件 |
+| `query-meals` | 查询当前可售卖的餐品列表 | 取 `originalPrice` 作为**常规价基准**，用于计算净节省 |
 | `calculate-price` | 商品价格计算 | 试算「券 + 积分兑换」组合的真实抵扣效果 |
 | `available-coupons` | 麦麦省券列表查询 | 计算用户还能额外锁定多少权益 |
 | `campaign-calendar` | 活动日历查询 | 判断是否值得择时兑换 |
@@ -80,13 +81,41 @@
 
 ### 数据流向与字段映射
 
+> 下表为**真实调用校准后**的映射。MCP 返回的是「给人看的」结构，与估值引擎需要的「可计算」结构存在若干硬差异，转换由 `tools/normalize_mcp.py` 完成，可复现。
+
 | MCP 返回值 | 归一化字段 | 用途 |
 | --- | --- | --- |
-| `query-my-account` → 可用积分 | `account.available_points` | 计入资产总额 |
-| `query-my-account` → 即将过期积分 / 到期日 | `account.expiring[].points` / `.expire_date` | 计算风险敞口与兑换路径 |
-| `mall-points-products` → 商品名 / 所需积分 | `mall_products[].name` / `.points` | 效率排序的分母 |
-| `mall-product-detail` + `query-meals` → 参考价值 | `mall_products[].cash_value` | 效率排序的分子 |
-| `query-my-coupons` → 面值 / 门槛 / 到期日 | `coupons[]` | 计入资产总额与券到期提醒 |
+| `query-my-account` → `availablePoint` | `account.available_points` | 计入资产总额（**注意是字符串小数，如 `"2741.9"`**） |
+| `query-my-account` → `accumulatedPoint` | `account.accumulated_points` | 历史总量 |
+| `query-my-account` → `expiredPoint` | `account.expired_points` | 历史上已蒸发的积分 |
+| `query-my-account` → `currentMouthExpirePoint` | `account.expiring[]` | 本月将过期积分，计算风险敞口 |
+| `mall-points-products` → `spuId` / `spuName` / `point` | `mall_products[].name` / `.points` | 效率排序的分母 |
+| `mall-product-detail` → `skuList[].extTradePrice` | 中间量（用券价） | **不是价值**，是「用券后你要付多少」 |
+| `mall-product-detail` → `note` 中的【兑换内容】 | 中间量（商品构成） | 解析出套餐/任选里的具体单品 |
+| `query-meals` → `meals[].originalPrice` | `mall_products[].cash_value` | 常规价；**净节省 = 常规价 − 用券价** |
+| `query-my-coupons` → markdown 文本 | `coupons[]` | 计入资产总额与券到期提醒 |
+
+### 实测校准：五处与直觉不符的地方
+
+以下结论来自 2026-10-09 的一次真实账户调用，不是文档推测。
+
+**1. `query-my-account` 不返回带到期日的积分批次。**
+只有三个月份粒度的桶：`currentMouthExpirePoint`（本月将过期）、`nextMouthExpirePoint`、`lastMouthExpirePoint`。所以「还剩几天过期」只能给出**本月最后一天**这个上界，无法精确到日。归一化时会在字段旁标注 `_derived`，报告中保留这一不确定性，不假装精确。
+
+**2. 积分商品的 `price` 恒为 `"0"`，现金参照藏在两个地方。**
+`mall-points-products` 里所有积分兑换项的 `price` 都是 `0`（那是给现金商品用的字段）。真正的钱在：
+- 商品名里（`"21.9元巨无霸可乐组合"`）
+- `mall-product-detail` 的 `skuList[].extTradePrice`
+
+**3. `extTradePrice` 是「用券价」，不是「价值」。**
+券面说明原文：「凭本券可享受 21.9 元**购买**巨无霸可乐组合」。所以 800 积分买到的是**以 ¥21.9 购买的权利**，不是 ¥21.9 的券。
+若直接拿它当价值排序，会得出完全错误的结论 —— 真正的收益是 `常规价 − 用券价`。本项目的引擎输入因此定义为**净节省额**，而不是面值。
+
+**4. `mall-points-products` 会把已下架商品一并返回，`status` 字段不可用作在售判据。**
+实测 50 个商品中，24 个是积分兑换项，其中 **17 个已下架（71%）**，但列表照样返回、`status` 全部为 `2`。要确认一项是否还能兑换，**必须逐个调 `mall-product-detail`**，以下架错误码 `610403` 为准。这是本项目最核心的一处工程判断。
+
+**5. `query-my-coupons` 没有结构化返回。**
+它只返回一段 markdown 文本（含 markdown 表格与 `<img>` 标签），需要正则解析。而 `query-meals` 的 `meals` 是**以餐品编码为键的 dict**，不是数组。
 
 ## 业务价值
 

@@ -41,14 +41,31 @@
 
 **产出**：完整可运行、可演示、符合大赛提交要求的 Skill 项目。
 
+### 阶段三 · 真实数据联调与模型校正
+
+**输入需求**：项目方提供了麦当劳 MCP Token，要求接入真实账户跑通全链路，补齐「真实使用 MCP」的核验材料。
+
+**WorkBuddy 执行的动作**：
+
+1. 以 Streamable HTTP + JSON-RPC 直接对接 `https://mcp.mcd.cn`，完成 `initialize` 握手与 `tools/list` 能力发现（实测 35 个工具）
+2. 调用 `now-time-info` / `query-my-account` / `mall-points-products` / `query-my-coupons` 拉取真实账户数据
+3. 逐个调用 `mall-product-detail` 验证 24 个积分兑换项的在售状态，发现 **17 项已下架（71%）**
+4. 通过 `query-nearby-stores` → `query-meals` 拉取真实菜单，建立常规价基准
+5. 编写 `tools/normalize_mcp.py` 完成 MCP 原始返回 → 引擎输入的映射层
+6. 依据真实返回结构修正 `MCP_INTEGRATION.md`、`references/tool-playbook.md`、`references/valuation-model.md` 中的字段映射与估值口径
+7. 修复真实数据暴露的两个引擎缺陷：积分小数被 `to_int` 截断、账户「历史累计已过期积分」字段未被使用
+8. 产出可复现的真实调用记录 `examples/real-run.md` 与脱敏快照
+
+**产出**：真实账户体检通过全链路验证；估值口径由「券面金额」校正为「净节省额」；项目具备可复现的真实运行证据。
+
 ## 使用的 WorkBuddy 能力
 
 | 能力 | 用途 |
 | --- | --- |
-| Agent 模式 | 全流程自主执行：调研 → 设计 → 编码 → 验证 → 交付 |
+| Agent 模式 | 全流程自主执行：调研 → 设计 → 编码 → 验证 → 真实联调 → 交付 |
 | 文件系统读写 | 创建项目结构、编写全部源码与文档 |
 | Shell 执行 | 克隆仓库、运行 Python 脚本验证输出、校验文件哈希 |
-| 联网检索 | 抓取大赛规则与 MCP 官方文档 |
+| 联网检索 | 抓取大赛规则与 MCP 官方文档；直连 MCP Server 完成真实调用 |
 | Skill 加载 | `skill-creator` 提供 Skill 结构规范 |
 | 可视化 | 生成选题竞争格局图，辅助主题决策 |
 
@@ -58,5 +75,5 @@
 
 ## 附注
 
-- 本项目中所有涉及麦当劳账户数据的逻辑均通过官方 MCP 接口获取，开发阶段使用构造的演示数据验证，未使用任何真实用户数据。
-- 项目未记录、未存储、未提交任何真实 MCP Token 或个人信息。
+- 项目中的所有账户数据均通过官方 MCP 接口实时获取。开发的**第 1—2 阶段**使用构造的演示数据验证引擎逻辑；**第 3 阶段**接入真实账户跑通全链路，原始返回快照已脱敏后归档在 `examples/real-run-snapshot/`（已移除 `accountId`，未包含任何身份信息）。
+- 项目未记录、未存储、未提交任何真实 MCP Token。

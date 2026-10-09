@@ -1,0 +1,196 @@
+{
+  "now": "2026-10-09",
+  "account": {
+    "available_points": 2741.9,
+    "accumulated_points": 7576.1,
+    "frozen_points": 0.0,
+    "expired_points": 1223.2,
+    "expiring": [
+      {
+        "points": 129.8,
+        "expire_date": "2026-10-31",
+        "_derived": "由 currentMouthExpirePoint 推算，为最晚到期日（上界）"
+      }
+    ]
+  },
+  "mall_products": [
+    {
+      "name": "10.9元指定小食任选",
+      "points": 200,
+      "cash_value": 4.1,
+      "kind": "到店专用",
+      "note": "常规价 15.00 − 用券价 10.90｜麦辣鸡翅 ¥15.00"
+    },
+    {
+      "name": "16.9元麦辣可乐组合",
+      "points": 500,
+      "cash_value": 15.1,
+      "kind": "到店专用",
+      "note": "常规价 32.00 − 用券价 16.90｜麦辣鸡腿汉堡 ¥22.50、可乐 ¥9.50"
+    },
+    {
+      "name": "21.9元巨无霸可乐组合",
+      "points": 800,
+      "cash_value": 13.1,
+      "kind": "到店专用",
+      "note": "常规价 35.00 − 用券价 21.90｜巨无霸 ¥25.50、可乐 ¥9.50"
+    },
+    {
+      "name": "6.9元香芋派/菠萝派任选",
+      "points": 50,
+      "cash_value": 1.6,
+      "kind": "到店专用",
+      "note": "常规价 8.50 − 用券价 6.90｜派 ¥8.50"
+    },
+    {
+      "name": "10.9元指定小食任选",
+      "points": 100,
+      "cash_value": 2.6,
+      "kind": "到店专用",
+      "note": "常规价 13.50 − 用券价 10.90｜薯条 ¥13.50"
+    },
+    {
+      "name": "17.9元板烧可乐组合",
+      "points": 500,
+      "cash_value": 15.1,
+      "kind": "到店专用",
+      "note": "常规价 33.00 − 用券价 17.90｜板烧鸡腿堡 ¥23.50、可乐 ¥9.50"
+    }
+  ],
+  "coupons": [
+    {
+      "name": "中薯条",
+      "cash_value": 13.5,
+      "expire_date": "2026-12-31"
+    },
+    {
+      "name": "麦辣鸡翅2块",
+      "cash_value": 15.0,
+      "expire_date": "2026-12-31"
+    },
+    {
+      "name": "奶香大米派",
+      "cash_value": 8.5,
+      "expire_date": "2026-12-31"
+    },
+    {
+      "name": "麦咖啡™美式中杯",
+      "cash_value": 9.9,
+      "expire_date": "2026-12-31"
+    },
+    {
+      "name": "麦咖啡™美式中杯",
+      "cash_value": 9.9,
+      "expire_date": "2026-12-31"
+    },
+    {
+      "name": "麦咖啡™奶铁中杯",
+      "cash_value": 9.9,
+      "expire_date": "2026-12-31"
+    },
+    {
+      "name": "麦咖啡™奶铁中杯",
+      "cash_value": 9.9,
+      "expire_date": "2026-12-31"
+    }
+  ],
+  "recent_redemptions": [],
+  "_meta": {
+    "source": "麦当劳中国 MCP Server (mcp.mcd.cn)",
+    "account_id_redacted": true,
+    "listed_points_products": 24,
+    "priced_products": 6,
+    "unpriced_products": [
+      {
+        "name": "为随心配五大巨星“应援”1积分兑换活动",
+        "reason": "已下架"
+      },
+      {
+        "name": "18.8元2份麦辣鸡翅",
+        "reason": "已下架"
+      },
+      {
+        "name": "18.8元板烧鸡腿堡两件套",
+        "reason": "已下架"
+      },
+      {
+        "name": "22.8元2份麦辣鸡腿堡",
+        "reason": "已下架"
+      },
+      {
+        "name": "5.9元香芋派/菠萝派任选",
+        "reason": "已下架"
+      },
+      {
+        "name": "28.9元板烧四件套",
+        "reason": "已下架"
+      },
+      {
+        "name": "22.9元2份板烧鸡腿堡",
+        "reason": "已下架"
+      },
+      {
+        "name": "22.9元2份麦辣鸡腿堡",
+        "reason": "已下架"
+      },
+      {
+        "name": "16.9元中薯麦乐鸡组合",
+        "reason": "已下架"
+      },
+      {
+        "name": "罗技键鼠套装",
+        "reason": "已下架"
+      },
+      {
+        "name": "6.9元可乐麦炫酷",
+        "reason": "构成单品不在菜单中，无法定价"
+      },
+      {
+        "name": "28.8元巨无霸四件套",
+        "reason": "已下架"
+      },
+      {
+        "name": "18.8元麦辣鸡腿汉堡两件套",
+        "reason": "已下架"
+      },
+      {
+        "name": "18.8元指定小食任选2份",
+        "reason": "已下架"
+      },
+      {
+        "name": "麦麦脆汁鸡两件套",
+        "reason": "已下架"
+      },
+      {
+        "name": "24.8元2份板烧鸡腿堡",
+        "reason": "已下架"
+      },
+      {
+        "name": "Nike Book 2 麦当劳特别联名款",
+        "reason": "已下架"
+      },
+      {
+        "name": "9.9元指定小食任选",
+        "reason": "已下架"
+      }
+    ],
+    "unpriced_coupons": [
+      {
+        "name": "三文鱼双虾至尊月堡",
+        "reason": "菜单中无对应单品，无法定价"
+      },
+      {
+        "name": "三文鱼双虾至尊月堡",
+        "reason": "菜单中无对应单品，无法定价"
+      },
+      {
+        "name": "咸蛋黄鸡腿蛋月堡",
+        "reason": "菜单中无对应单品，无法定价"
+      },
+      {
+        "name": "咸蛋黄鸡腿蛋月堡",
+        "reason": "菜单中无对应单品，无法定价"
+      }
+    ]
+  }
+}

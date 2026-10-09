@@ -85,6 +85,26 @@ def to_int(raw: Any, default: int = 0) -> int:
         return default
 
 
+def to_num(raw: Any, default: float = 0.0) -> float:
+    """积分可能是小数（如麦享会积分 2741.9），必须保留精度。
+
+    早期版本对积分一律用 to_int，会把 2741.9 截断成 2741 —— 单笔看是小误差，
+    但它会同时污染账面价值与风险敞口两个派生指标，所以单独提供本函数。
+    """
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return default
+    return value if value == value and abs(value) != float("inf") else default
+
+
+def fmt_points(value: float) -> str:
+    """积分展示：整数不带小数点，小数保留原精度。"""
+    if float(value).is_integer():
+        return f"{int(value):,}"
+    return f"{value:,.2f}".rstrip("0").rstrip(".")
+
+
 @dataclass
 class Product:
     """麦麦商城里一个可用积分兑换的商品。"""
@@ -143,7 +163,7 @@ class Coupon:
 class ExpiryBucket:
     """一笔即将过期的积分。"""
 
-    points: int
+    points: float
     expire_date: date
 
     def days_left(self, today: date) -> int:
@@ -158,9 +178,10 @@ class Vault:
     """一份完整的输入快照。"""
 
     today: date
-    available_points: int = 0
-    accumulated_points: int = 0
-    frozen_points: int = 0
+    available_points: float = 0.0
+    accumulated_points: float = 0.0
+    frozen_points: float = 0.0
+    expired_history: float = 0.0
     expiring: list[ExpiryBucket] = field(default_factory=list)
     products: list[Product] = field(default_factory=list)
     coupons: list[Coupon] = field(default_factory=list)
@@ -240,12 +261,12 @@ def build_vault(payload: dict[str, Any], today: date | None = None) -> Vault:
     # 兼容两种写法：列表 [{"points":..,"expire_date":..}] 或纯数字总额
     buckets: list[ExpiryBucket] = []
     if isinstance(raw_expiring, (int, float)):
-        buckets.append(ExpiryBucket(points=to_int(raw_expiring), expire_date=today))
+        buckets.append(ExpiryBucket(points=to_num(raw_expiring), expire_date=today))
     else:
         for item in raw_expiring:
             if not isinstance(item, dict):
                 continue
-            pts = to_int(_first_key(item, "points", "amount", "value"))
+            pts = to_num(_first_key(item, "points", "amount", "value"))
             exp = parse_date(_first_key(item, "expire_date", "expiry", "deadline", "date"))
             if pts > 0 and exp:
                 buckets.append(ExpiryBucket(points=pts, expire_date=exp))
@@ -291,11 +312,16 @@ def build_vault(payload: dict[str, Any], today: date | None = None) -> Vault:
 
     return Vault(
         today=today,
-        available_points=to_int(
+        available_points=to_num(
             _first_key(acct, "available_points", "available", "points", "balance")
         ),
-        accumulated_points=to_int(_first_key(acct, "accumulated_points", "accumulated", "total")),
-        frozen_points=to_int(_first_key(acct, "frozen_points", "frozen")),
+        accumulated_points=to_num(
+            _first_key(acct, "accumulated_points", "accumulated", "total")
+        ),
+        frozen_points=to_num(_first_key(acct, "frozen_points", "frozen")),
+        expired_history=to_num(
+            _first_key(acct, "expired_history", "expired_points", "expired", "history_expired")
+        ),
         expiring=buckets,
         products=products,
         coupons=coupons,
@@ -310,7 +336,7 @@ def build_vault(payload: dict[str, Any], today: date | None = None) -> Vault:
 # --------------------------------------------------------------------------
 
 
-def build_rescue_plan(need_points: int, products: Iterable[Product]) -> list[dict[str, Any]]:
+def build_rescue_plan(need_points: float, products: Iterable[Product]) -> list[dict[str, Any]]:
     """用最少的「浪费」覆盖即将过期的积分。
 
     策略：按每 100 积分价值从高到低贪心取用，每次尽可能拿满还能付得起的数量。
@@ -326,7 +352,7 @@ def build_rescue_plan(need_points: int, products: Iterable[Product]) -> list[dic
     for product in sorted(products, key=lambda p: p.value_per_100, reverse=True):
         if remaining < product.points:
             continue
-        qty = max(1, remaining // product.points)
+        qty = max(1, int(remaining // product.points))
         plan.append(
             {
                 "name": product.name,
@@ -366,21 +392,25 @@ def render_markdown(vault: Vault) -> str:
     # ---- 一句话结论 -----------------------------------------------------
     add("## 一句话结论")
     add("")
-    if vault.expired_points > 0:
-        add(
-            f"> 已有 **{vault.expired_points:,} 积分** 过期作废。"
-            f"当前账户仍有 **{money(vault.total_value)}** 的可用资产。"
-        )
-    elif vault.at_risk_points > 0:
+    if vault.at_risk_points > 0:
         add(
             f"> 你的麦麦账户现值 **{money(vault.total_value)}**，"
-            f"其中 **{vault.at_risk_points:,} 积分**（约 {money(vault.at_risk_value)}）"
+            f"其中 **{fmt_points(vault.at_risk_points)} 积分**（约 {money(vault.at_risk_value)}）"
             f"将在 {WINDOW_DAYS} 天内过期 —— 不管它就真的没了。"
         )
     else:
         add(
             f"> 你的麦麦账户现值 **{money(vault.total_value)}**，"
             f"暂无积分临近过期。资产状态健康。"
+        )
+    if vault.expired_points > 0:
+        add(">")
+        add(f"> 另有 **{fmt_points(vault.expired_points)} 积分** 的到期日已经过去。")
+    if vault.expired_history > 0:
+        add(">")
+        add(
+            f"> 账户历史上已有 **{fmt_points(vault.expired_history)} 积分** 因过期而作废，"
+            f"按最优汇率折算约合 {money(vault.expired_history * vault.best_value_per_100 / 100.0)}。"
         )
     add("")
 
@@ -389,11 +419,13 @@ def render_markdown(vault: Vault) -> str:
     add("")
     add("| 项目 | 数值 | 说明 |")
     add("| --- | ---: | --- |")
-    add(f"| 可用积分 | {vault.available_points:,} | 可随时兑换 |")
+    add(f"| 可用积分 | {fmt_points(vault.available_points)} | 可随时兑换 |")
     if vault.frozen_points:
-        add(f"| 冻结积分 | {vault.frozen_points:,} | 暂不可用 |")
+        add(f"| 冻结积分 | {fmt_points(vault.frozen_points)} | 暂不可用 |")
     if vault.accumulated_points:
-        add(f"| 累计积分 | {vault.accumulated_points:,} | 历史总量 |")
+        add(f"| 累计积分 | {fmt_points(vault.accumulated_points)} | 历史总量 |")
+    if vault.expired_history:
+        add(f"| 累计已过期 | {fmt_points(vault.expired_history)} | 历史蒸发，无法追回 |")
     add(f"| 积分最优汇率 | {vault.best_value_per_100:.2f} 元/100分 | 现行最划算的兑换出口 |")
     add(f"| 积分账面价值 | {money(vault.points_book_value)} | 按最优汇率折算 |")
     add(f"| 券面总值 | {money(vault.coupon_value)} | {len(vault.coupons)} 张券 |")
@@ -418,7 +450,7 @@ def render_markdown(vault: Vault) -> str:
             days_text = "已过期" if days < 0 else f"{days} 天"
             add(
                 f"| {bucket.expire_date.isoformat()} | {days_text} | "
-                f"{bucket.points:,} | {money(value)} | {RISK_LABEL[risk]} |"
+                f"{fmt_points(bucket.points)} | {money(value)} | {RISK_LABEL[risk]} |"
             )
         add("")
 
@@ -429,7 +461,7 @@ def render_markdown(vault: Vault) -> str:
             add("### 建议兑换路径")
             add("")
             add(
-                f"用 **{covered:,} 积分** 换回 **{money(gained)}** 的实物/权益，"
+                f"用 **{fmt_points(covered)} 积分** 换回 **{money(gained)}** 的实物/权益，"
                 f"覆盖 {WINDOW_DAYS} 天内的过期敞口："
             )
             add("")
@@ -437,14 +469,14 @@ def render_markdown(vault: Vault) -> str:
             add("| --- | ---: | ---: | ---: | ---: |")
             for item in plan:
                 add(
-                    f"| {item['name']} | ×{item['qty']} | {item['points_total']:,} | "
+                    f"| {item['name']} | ×{item['qty']} | {fmt_points(item['points_total'])} | "
                     f"{money(item['value_total'])} | {item['value_per_100']:.2f} 元/100分 |"
                 )
             add("")
             leftover = vault.at_risk_points - covered
             if leftover > 0:
                 add(
-                    f"> 仍有 **{leftover:,} 积分** 无法用现有商品覆盖，"
+                    f"> 仍有 **{fmt_points(leftover)} 积分** 无法用现有商品覆盖，"
                     f"建议等商城上新，或先用 `auto-bind-coupons` 领券锁住权益。"
                 )
                 add("")
@@ -473,7 +505,7 @@ def render_markdown(vault: Vault) -> str:
             else:
                 advice = "暂缓"
             add(
-                f"| {index} | {product.name} | {product.points:,} | "
+                f"| {index} | {product.name} | {fmt_points(product.points)} | "
                 f"{money(product.cash_value)} | {product.value_per_100:.2f} 元 | {advice} |"
             )
         add("")
