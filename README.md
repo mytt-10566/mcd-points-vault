@@ -10,9 +10,10 @@
 
 ---
 
-<!-- 演示动图占位：录一段 15 秒的使用过程，导出为 demo.gif 放在仓库根目录，然后把下面这行取消注释。
-![演示](demo.gif)
--->
+![麦麦积分钱庄演示：一次完整的账户资产体检](demo.gif)
+
+*真实运行录屏：敲下命令 → 账户现值 → 资产总览 → 积分变现效率排行。*
+*（动图由 `tools/make_demo_gif.py` 读取工具实际输出渲染而成，内容与真实结果逐字一致。）*
 
 ## 它能算出什么
 
@@ -50,7 +51,7 @@
 ## 30 秒上手（不需要 Token）
 
 ```bash
-git clone https://github.com/<你的用户名>/mcd-points-vault.git
+git clone https://github.com/mytt-10566/mcd-points-vault.git
 cd mcd-points-vault
 python3 scripts/points_vault.py --demo
 ```
@@ -125,17 +126,23 @@ campaign-calendar ────┘
 ```
 mcd-points-vault/
 ├── SKILL.md                      # 技能定义与执行流程
+├── demo.gif                      # 首屏演示动图
 ├── scripts/
 │   └── points_vault.py           # 估值引擎（纯标准库，零依赖）
+├── tools/
+│   └── make_demo_gif.py          # 演示动图生成器（构建工具，需 Pillow）
 ├── references/
 │   ├── tool-playbook.md          # MCP 工具调用手册
 │   └── valuation-model.md        # 估值模型与标准输入格式
 ├── examples/
-│   └── demo-account.json         # 演示数据
+│   ├── demo-account.json         # 演示数据
+│   └── demo-report.md            # 演示报告存档
 ├── README.md                     # 本文件
 ├── MCP_INTEGRATION.md            # MCP 集成说明
 ├── CONTEST_DECLARATION.md        # 参赛声明（官方原文）
-└── mcp-config.example.json       # 脱敏配置示例
+├── workbuddy.md                  # WorkBuddy 开发上下文
+├── mcp-config.example.json       # 脱敏配置示例
+└── LICENSE
 ```
 
 ## 使用自己的数据
